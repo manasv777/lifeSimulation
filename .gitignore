@@ -1,0 +1,7 @@
+PyOpenWorm/
+c302/
+venv/
+__pycache__/
+*.pyc
+wandb/
+models/
