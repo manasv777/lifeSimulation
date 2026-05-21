@@ -3,6 +3,23 @@ from stable_baselines3 import PPO
 from stable_baselines3.common.callbacks import BaseCallback
 from worm_gym_env import WormGymEnv
 import random
+from connectome_network import ConnectomeNetwork
+from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
+import torch
+import torch.nn as nn
+
+class ConnectomeFeatureExtractor(BaseFeaturesExtractor):
+
+    def __init__(self, observation_space, features_dim = 64):
+        super().__init__(observation_space, features_dim)
+
+        self.connectome = ConnectomeNetwork()
+        self.output = nn.Linear(5, features_dim)
+
+    def forward(self, observations):
+        x = self.connectome(observations)
+        return self.output(x)
+
 
 class SimpleLoggingCallback(BaseCallback):
     def __init__(self, verbose=0):
@@ -23,16 +40,16 @@ class SimpleLoggingCallback(BaseCallback):
 
 run = wandb.init(
     project="c-elegans-devai",
-    name="worm-baseline-training",
+    name="connectome-signed-weights",
     config={
         "algorithm": "PPO",
+        "policy": "ConnectomeFeatureExtractor",
         "total_timesteps": 100_000,
         "grid_size": 20,
         "max_steps_per_episode": 200,
         "learning_rate": 3e-4,
     }
 )
-
 env = WormGymEnv()
 
 model = PPO(
@@ -43,6 +60,10 @@ model = PPO(
     n_steps=2048,
     batch_size=64,
     n_epochs=10,
+    policy_kwargs={
+        "features_extractor_class": ConnectomeFeatureExtractor,
+        "features_extractor_kwargs": {"features_dim": 64}
+    }
 )
 
 print("Starting training...")
@@ -53,7 +74,7 @@ model.learn(
     callback=SimpleLoggingCallback()
 )
 
-model.save("models/worm_ppo_baseline")
+model.save("models/worm_ppo_connectome_A")
 print("\nModel saved!")
 
 test_env = WormGymEnv()

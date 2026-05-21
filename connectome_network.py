@@ -15,12 +15,18 @@ def build_adjacency_matrix():
     #Creates the 302x302 adjacency matrix (empty at beginning)
     matrix = np.zeros((n_neurons, n_neurons))
 
-    #Fill the adjacency matrix with connection weights
+    # Neurotransmitters that produce inhibitory signals in C. elegans
+    INHIBITORY = ['GABA', 'FMRFamide']
+
+    # Fill the adjacency matrix with biologically signed connection weights
     for conn in neuron_connections:
         if conn.pre_cell in neuron_to_index and conn.post_cell in neuron_to_index:
             i = neuron_to_index[conn.pre_cell]
             j = neuron_to_index[conn.post_cell]
-            matrix[i][j] += conn.number  # Sum synapse counts for multiple connections
+            if conn.synclass in INHIBITORY:
+                matrix[i][j] -= conn.number  # inhibitory = negative weight
+            else:
+                matrix[i][j] += conn.number  # excitatory = positive weight
 
     return matrix, neuron_to_index, cells
 
@@ -110,3 +116,6 @@ if __name__ == "__main__":
     print(f"Output shape: {output.shape}")
     print(f"Action logits: {output}")
     print("\nConnectome network working correctly!")
+    print(f"Min connection strength: {matrix.min()}")
+    print(f"Inhibitory connections: {np.sum(matrix < 0)}")
+    print(f"Excitatory connections: {np.sum(matrix > 0)}")
