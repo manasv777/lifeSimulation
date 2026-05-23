@@ -7,6 +7,7 @@ from connectome_network import ConnectomeNetwork
 from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
 import torch
 import torch.nn as nn
+from connectome_policy import ConnectomePolicy
 
 class ConnectomeFeatureExtractor(BaseFeaturesExtractor):
 
@@ -40,7 +41,7 @@ class SimpleLoggingCallback(BaseCallback):
 
 run = wandb.init(
     project="c-elegans-devai",
-    name="connectome-two-matrix",
+    name="connectome-option-b",
     config={
         "algorithm": "PPO",
         "policy": "ConnectomeFeatureExtractor",
@@ -53,17 +54,13 @@ run = wandb.init(
 env = WormGymEnv()
 
 model = PPO(
-    "MlpPolicy",
+    ConnectomePolicy,
     env,
     verbose=1,
     learning_rate=3e-4,
     n_steps=2048,
     batch_size=64,
     n_epochs=10,
-    policy_kwargs={
-        "features_extractor_class": ConnectomeFeatureExtractor,
-        "features_extractor_kwargs": {"features_dim": 64}
-    }
 )
 
 print("Starting training...")
@@ -74,7 +71,7 @@ model.learn(
     callback=SimpleLoggingCallback()
 )
 
-model.save("models/worm_ppo_connectome_two_matrix")
+model.save("models/worm_ppo_connectome_B")
 print("\nModel saved!")
 
 test_env = WormGymEnv()

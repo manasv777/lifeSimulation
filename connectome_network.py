@@ -60,6 +60,8 @@ class ConnectomeNetwork(nn.Module):
         self.sensory_idx = sensory_idx
         self.motor_idx = motor_idx
         self.n_neurons = len(cells)
+
+        self.value_layer = nn.Linear(len(motor_idx), 1)  # Critic head for value estimation
         
         # Normalize and store gap junction matrix
         gap_normalized = gap_matrix / gap_matrix.max()
@@ -103,7 +105,8 @@ class ConnectomeNetwork(nn.Module):
         # Step 6 — linear layer to 5 action probabilities
         action_logits = self.output_layer(motor_outputs)
         
-        return action_logits
+        values = self.value_layer(motor_outputs)
+        return action_logits, values
 
             
 
