@@ -40,7 +40,7 @@ class SimpleLoggingCallback(BaseCallback):
 
 run = wandb.init(
     project="c-elegans-devai",
-    name="connectome-signed-weights",
+    name="connectome-two-matrix",
     config={
         "algorithm": "PPO",
         "policy": "ConnectomeFeatureExtractor",
@@ -74,7 +74,7 @@ model.learn(
     callback=SimpleLoggingCallback()
 )
 
-model.save("models/worm_ppo_connectome_A")
+model.save("models/worm_ppo_connectome_two_matrix")
 print("\nModel saved!")
 
 test_env = WormGymEnv()

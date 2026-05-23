@@ -46,3 +46,16 @@ Today I completed the Gymnasium wrapper connecting the Mesa world to PPO. Enviro
 
 Day 5 Complete
 First successful training run. Worm learned chemotaxis — navigating from random starting positions to food by following chemical gradient. Tested from 5 different starting positions including (18,3) to food at (10,10) — 20 steps. This is biologically valid gradient following behavior. Baseline MLP policy validated. Next step: replace MLP with connectome-based PyTorch network.
+
+Day 6
+Built connectome-based PyTorch network. 302 neurons, 3,119 connections, biologically seeded weights. Signal flows from 86 sensory neurons through interneurons to 127 motor neurons via real adjacency matrix. Linear output layer translates motor neuron activations to 5 action probabilities, pick the highest probability. Network verified — correct input/output shapes, gradient tracking confirmed. Tomorrow: connect this network to PPO training pipeline and compare against MLP baseline.
+
+Day 7
+
+Notes
+Running Ablation Study 
+Planned improvement: initialize adjacency matrix weights with biological sign — excitatory neurotransmitters (Glutamate, Acetylcholine) get positive weights, inhibitory (GABA) get negative weights, GapJunctions stay positive. This makes initial weight matrix biologically faithful beyond just strength — also encoding signal direction.
+INHIBITORY = ['GABA', 'FMRFamide']
+EXCITATORY = everything else
+
+Summary: Today, I replaced the MLP Policy's neural network with connectome neuron network and trained the model. The first time, I had all weights start between 0 and 1 for every connection, and the second time, I made inhibitory chemical neurotransmitters start with negative weights. Both connectome models showed superior starting performance compared to the MLP baseline (-6.x vs -14 at iteration 1), demonstrating that biological weight initialization provides a measurable head start. The MLP's final test average of -7.33 reflects 100,000 steps of learning from a random start, while the signed connectome model reached -7.96 starting from a biologically informed position. Planned improvement to do tomorrow is to change how the chemical and electrical connections are represented in the adjacency matrix (might have to change the system to use seperate adjacency matrices for gap junction (electrical) and chemical) to model their singaling independelty and see if that brings the model closer or better than the MLP model's test average.
