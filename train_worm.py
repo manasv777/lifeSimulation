@@ -18,8 +18,8 @@ class ConnectomeFeatureExtractor(BaseFeaturesExtractor):
         self.output = nn.Linear(5, features_dim)
 
     def forward(self, observations):
-        x = self.connectome(observations)
-        return self.output(x)
+        action_logits, values = self.connectome(observations)
+        return self.output(action_logits)
 
 
 class SimpleLoggingCallback(BaseCallback):
@@ -41,7 +41,7 @@ class SimpleLoggingCallback(BaseCallback):
 
 run = wandb.init(
     project="c-elegans-devai",
-    name="connectome-option-b",
+    name="connectome-two-matrix-option-b-v2",
     config={
         "algorithm": "PPO",
         "policy": "ConnectomeFeatureExtractor",
@@ -54,7 +54,7 @@ run = wandb.init(
 env = WormGymEnv()
 
 model = PPO(
-    ConnectomePolicy,
+    ConnectomePolicy,  # ← direct class, no quotes
     env,
     verbose=1,
     learning_rate=3e-4,
@@ -71,7 +71,7 @@ model.learn(
     callback=SimpleLoggingCallback()
 )
 
-model.save("models/worm_ppo_connectome_B")
+model.save("models/worm_ppo_two_matrix_option_b_v2")
 print("\nModel saved!")
 
 test_env = WormGymEnv()
