@@ -7,8 +7,9 @@ from worm_environment import WormWorld
 
 class WormGymEnv(gym.Env):
     
-    def __init__(self, width=20, height=20):
+    def __init__(self, width=20, height=20, nociception = False):
         super().__init__()
+        self.nociception = nociception
         
         # Create the Mesa world
         self.world = WormWorld(width=width, height=height)
@@ -39,14 +40,12 @@ class WormGymEnv(gym.Env):
     
     def _get_observation(self):
         worm = self.world.agents[0]
-        
         gradient_value = self.world.gradient[worm.pos[0]][worm.pos[1]]
-        
         hunger_value = worm.hunger
-
-        noxious_value = self.world.noxious_gradient[worm.pos[0]][worm.pos[1]]
-
-        return np.array([gradient_value, hunger_value, noxious_value], dtype=np.float32)
+        if self.nociception:
+            noxious_value = self.world.noxious_gradient[worm.pos[0]][worm.pos[1]]
+            return np.array([gradient_value, hunger_value, noxious_value], dtype=np.float32)
+        return np.array([gradient_value, hunger_value], dtype=np.float32)
     
     def step(self, action):
         self.current_step += 1

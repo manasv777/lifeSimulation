@@ -83,4 +83,15 @@ Implemented recurrent neural network and processed models through offical 20-epi
 Day 10
 "Hypothesis: nociception model will show worse mean reward than chemotaxis-only models due to increased task complexity — worm must now balance competing food approach and noxious avoidance signals simultaneously. Expected lower mean reward but scientifically more interesting behavior."
 
-Hypthesis was wrong. Why? Because the worm has 2 singals incoming now to learn, which can actually make it more efficient because it has more ot learn from. Finished nociception and validated it against an MLP baseline. Nociception model shows 50% reduction in noxious zone entries vs MLP baseline (0.15 vs 0.30 per epsiode), and made table two. Two behaviors validated: chemotaxis and nociception.
+Hypthesis was wrong. Why? Because the worm has 2 singals incoming now to learn, which can actually make it more efficient because it has more ot learn from. Finished nociception and validated it against an MLP baseline. Nociception model shows 50% reduction` in noxious zone entries vs MLP baseline (0.15 vs 0.30 per epsiode), and made table two. Two behaviors validated: chemotaxis and nociception.
+
+Biological Validation:
+
+1. Chemotaxis: gradient-following behavior consistent with 
+   pirouette model (Pierce-Shimomura et al. 1999, WormBook)
+   
+2. Nociception: ASH neuron injection consistent with 
+   polymodal nociceptor role documented in WormBook
+   
+3. Behavioral consistency: low variance in connectome models
+   matches reliable chemotaxis reported in C. elegans literature

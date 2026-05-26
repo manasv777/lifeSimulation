@@ -49,8 +49,9 @@ def load_neuron_classification(neuron_to_idx):
 
 class ConnectomeNetwork(nn.Module):
     
-    def __init__(self):
+    def __init__(self, nociception = False):
         super().__init__()
+        self.nociception = nociception
         
         # Build two adjacency matrices from biological data
         gap_matrix, chemical_matrix, neuron_to_idx, cells = build_adjacency_matrices()
@@ -92,15 +93,16 @@ class ConnectomeNetwork(nn.Module):
         else:
             neuron_activations = self.previous_state.detach()
         
-       # Inject food gradient into all sensory neurons
+        # Inject food gradient into sensory neurons
         gradient_value = x[:, 0]
         for idx in self.sensory_idx:
             neuron_activations[:, idx] = gradient_value
 
-        # Inject noxious gradient into ASH neurons specifically
-        noxious_value = x[:, 2]
-        for idx in self.ash_idx:
-            neuron_activations[:, idx] = noxious_value
+        # Only inject noxious if nociception enabled
+        if self.nociception:
+            noxious_value = x[:, 2]
+            for idx in self.ash_idx:
+                neuron_activations[:, idx] = noxious_value
         
         # Step 3 — propagate through both matrices seperately
         electrical_signal = neuron_activations @ self.gap_adjacency

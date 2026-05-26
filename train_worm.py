@@ -14,7 +14,7 @@ class ConnectomeFeatureExtractor(BaseFeaturesExtractor):
     def __init__(self, observation_space, features_dim = 64):
         super().__init__(observation_space, features_dim)
 
-        self.connectome = ConnectomeNetwork()
+        self.connectome = ConnectomeNetwork(nociception=False)
         self.output = nn.Linear(5, features_dim)
 
     def forward(self, observations):
