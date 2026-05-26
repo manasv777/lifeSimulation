@@ -60,6 +60,7 @@ class ConnectomeNetwork(nn.Module):
         self.sensory_idx = sensory_idx
         self.motor_idx = motor_idx
         self.n_neurons = len(cells)
+        self.previous_state = None
 
         self.value_layer = nn.Linear(len(motor_idx), 1)  # Critic head for value estimation
         
@@ -84,8 +85,11 @@ class ConnectomeNetwork(nn.Module):
     def forward(self, x):
         batch_size = x.shape[0]
         
-        # Step 1 — create 302-length input vector
-        neuron_activations = torch.zeros(batch_size, self.n_neurons)
+        # Step 1 — create 302-length input vector, starting with previous activations or zeros
+        if self.previous_state is None or self.previous_state.shape[0] != batch_size:
+            neuron_activations = torch.zeros(batch_size, self.n_neurons)
+        else:
+            neuron_activations = self.previous_state.detach()
         
         # Step 2 — inject gradient value into sensory neurons
         gradient_value = x[:, 0]  # first observation value
@@ -106,6 +110,8 @@ class ConnectomeNetwork(nn.Module):
         action_logits = self.output_layer(motor_outputs)
         
         values = self.value_layer(motor_outputs)
+
+        self.previous_state = neuron_activations
         return action_logits, values
 
             
@@ -139,8 +145,10 @@ if __name__ == "__main__":
     network = ConnectomeNetwork()
     
     test_obs = torch.FloatTensor([[0.073, 0.1]])
-    output = network(test_obs)
+    action_logits, values = network(test_obs)
     print(f"Input shape: {test_obs.shape}")
-    print(f"Output shape: {output.shape}")
-    print(f"Action logits: {output}")
+    print(f"Action logits shape: {action_logits.shape}")
+    print(f"Values shape: {values.shape}")
+    print(f"Action logits: {action_logits}")
+    print(f"Values: {values}")
     print("\nConnectome network working correctly!")

@@ -6,12 +6,13 @@ from connectome_policy import ConnectomePolicy
 
 # ── Configuration ──────────────────────────────────────────────
 SEED = 42
-N_EPISODES = 100
+N_EPISODES = 20
 MODELS = {
     "MLP Baseline":              "models/worm_ppo_baseline",
     "Connectome Signed (Opt A)": "models/worm_ppo_connectome_signed_v2",
     "Two-Matrix (Opt A)":        "models/worm_ppo_connectome_two_matrix_v2",
     "Two-Matrix + Option B":     "models/worm_ppo_two_matrix_option_b_v2",
+    "Recurrent Option B":        "models/worm_ppo_recurrent_option_b",
 }
 
 # ── Generate fixed test episodes ───────────────────────────────

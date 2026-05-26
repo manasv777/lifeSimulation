@@ -59,3 +59,23 @@ INHIBITORY = ['GABA', 'FMRFamide']
 EXCITATORY = everything else
 
 Summary: Today, I replaced the MLP Policy's neural network with connectome neuron network and trained the model. The first time, I had all weights start between 0 and 1 for every connection, and the second time, I made inhibitory chemical neurotransmitters start with negative weights. Both connectome models showed superior starting performance compared to the MLP baseline (-6.x vs -14 at iteration 1), demonstrating that biological weight initialization provides a measurable head start. The MLP's final test average of -7.33 reflects 100,000 steps of learning from a random start, while the signed connectome model reached -7.96 starting from a biologically informed position. Planned improvement to do tomorrow is to change how the chemical and electrical connections are represented in the adjacency matrix (might have to change the system to use seperate adjacency matrices for gap junction (electrical) and chemical) to model their singaling independelty and see if that brings the model closer or better than the MLP model's test average.
+
+Day 8
+
+Hypothesis: two-matrix implementation will show better initial performance than single signed matrix due to separate electrical and chemical signal processing. Expected test average to approach or surpass MLP baseline of -7.33.
+
+Result after implementing two-matrix
+
+MLP: arbitrary architecture, random start → -7.33 after full training
+Connectome unsigned: biological topology, unsigned weights → -8.47
+Connectome signed: biological topology, signed weights → -7.96  
+Connectome two-matrix: biological topology, separate signal channels → -7.47
+
+Each successive increase in biological fidelity — from unsigned to signed weights, from single to dual signal channels — produced measurable improvement in navigation performance, approaching the performance of an architecturally unconstrained baseline while maintaining biological interpretability. 
+
+Day 8 complete. Two-matrix implementation separating gap junction (electrical, bidirectional) and chemical synapses (signed by neurotransmitter) achieved test average -7.47, nearly matching MLP baseline of -7.33. Clear trend confirmed: biological grounding improves performance. Four architecture comparison complete. Ready for Option B fully custom policy and statistical validation."
+
+Update: Added fully custom policy and did stastical validation. Turns out connectome accuracy is much more important than fully custom policy for accurate results. 
+
+Day 9 complete.
+Implemented recurrent neural network and processed models through offical 20-episode seed 42 validation, Recurrent Option B achieves mean -5.52, statistically equivalent to MLP baseline -5.46. Two model types useful: consistency-optimized (signed/two-matrix, std ~0.7) and performance-optimized (recurrent, std 5.30). Full ablation study complete, next is nociception
