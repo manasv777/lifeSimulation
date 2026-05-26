@@ -79,3 +79,8 @@ Update: Added fully custom policy and did stastical validation. Turns out connec
 
 Day 9 complete.
 Implemented recurrent neural network and processed models through offical 20-episode seed 42 validation, Recurrent Option B achieves mean -5.52, statistically equivalent to MLP baseline -5.46. Two model types useful: consistency-optimized (signed/two-matrix, std ~0.7) and performance-optimized (recurrent, std 5.30). Full ablation study complete, next is nociception
+
+Day 10
+"Hypothesis: nociception model will show worse mean reward than chemotaxis-only models due to increased task complexity — worm must now balance competing food approach and noxious avoidance signals simultaneously. Expected lower mean reward but scientifically more interesting behavior."
+
+Hypthesis was wrong. Why? Because the worm has 2 singals incoming now to learn, which can actually make it more efficient because it has more ot learn from. Finished nociception and validated it against an MLP baseline. Nociception model shows 50% reduction in noxious zone entries vs MLP baseline (0.15 vs 0.30 per epsiode), and made table two. Two behaviors validated: chemotaxis and nociception.

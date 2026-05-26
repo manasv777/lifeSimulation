@@ -17,7 +17,7 @@ class WormGymEnv(gym.Env):
         self.observation_space = gym.spaces.Box(
             low=0.0,
             high=1.0,
-            shape=(2,),
+            shape=(3,),
             dtype=np.float32
         )
         
@@ -44,7 +44,9 @@ class WormGymEnv(gym.Env):
         
         hunger_value = worm.hunger
 
-        return np.array([gradient_value, hunger_value], dtype=np.float32)
+        noxious_value = self.world.noxious_gradient[worm.pos[0]][worm.pos[1]]
+
+        return np.array([gradient_value, hunger_value, noxious_value], dtype=np.float32)
     
     def step(self, action):
         self.current_step += 1
@@ -53,6 +55,7 @@ class WormGymEnv(gym.Env):
         worm = list(self.world.agents)[0]
         
         # Capture gradient BEFORE moving
+        old_noxious = self.world.noxious_gradient[worm.pos[0]][worm.pos[1]]
         old_gradient = self.world.gradient[worm.pos[0]][worm.pos[1]]
         
         # Execute the action - move the worm
@@ -86,8 +89,10 @@ class WormGymEnv(gym.Env):
         
         # Calculate reward with gradient shaping
         new_gradient = self.world.gradient[worm.pos[0]][worm.pos[1]]
+        new_noxious = self.world.noxious_gradient[worm.pos[0]][worm.pos[1]]
         gradient_reward = (new_gradient - old_gradient) * 10
-        reward = -0.1 + gradient_reward
+        noxious_penalty = (new_noxious - old_noxious) * 15  # stronger than food reward
+        reward = -0.1 + gradient_reward - noxious_penalty
         
         # Check if worm reached food
         if worm.pos == self.world.food_pos:

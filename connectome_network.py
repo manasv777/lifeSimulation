@@ -59,6 +59,7 @@ class ConnectomeNetwork(nn.Module):
         # Store neuron indices
         self.sensory_idx = sensory_idx
         self.motor_idx = motor_idx
+        self.ash_idx = [neuron_to_idx['ASHL'], neuron_to_idx['ASHR']]
         self.n_neurons = len(cells)
         self.previous_state = None
 
@@ -91,10 +92,15 @@ class ConnectomeNetwork(nn.Module):
         else:
             neuron_activations = self.previous_state.detach()
         
-        # Step 2 — inject gradient value into sensory neurons
-        gradient_value = x[:, 0]  # first observation value
+       # Inject food gradient into all sensory neurons
+        gradient_value = x[:, 0]
         for idx in self.sensory_idx:
             neuron_activations[:, idx] = gradient_value
+
+        # Inject noxious gradient into ASH neurons specifically
+        noxious_value = x[:, 2]
+        for idx in self.ash_idx:
+            neuron_activations[:, idx] = noxious_value
         
         # Step 3 — propagate through both matrices seperately
         electrical_signal = neuron_activations @ self.gap_adjacency
@@ -144,7 +150,7 @@ if __name__ == "__main__":
     print("\nBuilding connectome network...")
     network = ConnectomeNetwork()
     
-    test_obs = torch.FloatTensor([[0.073, 0.1]])
+    test_obs = torch.FloatTensor([[0.073, 0.1, 0.3]])
     action_logits, values = network(test_obs)
     print(f"Input shape: {test_obs.shape}")
     print(f"Action logits shape: {action_logits.shape}")

@@ -36,6 +36,10 @@ class WormWorld(mesa.Model):
 
         self.food_pos = (width // 2, height // 2)
 
+        self.noxious_pos = (width // 4, height // 4)
+        self.noxious_gradient = np.zeros((width, height))
+        self._update_noxious_gradient()
+
         self.gradient = np.zeros((width, height))
         self._update_gradient()
 
@@ -52,6 +56,15 @@ class WormWorld(mesa.Model):
                     (y - self.food_pos[1])**2
                 )
                 self.gradient[x][y] = 1.0 / (1.0 + dist)
+
+    def _update_noxious_gradient(self):
+        for x in range(self.width):
+            for y in range(self.height):
+                dist = np.sqrt(
+                    (x - self.noxious_pos[0])**2 +
+                    (y - self.noxious_pos[1])**2
+                )
+                self.noxious_gradient[x][y] = 1.0 / (1.0 + dist)
 
     def step(self):
         self.agents.shuffle_do("step")
