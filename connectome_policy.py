@@ -20,7 +20,7 @@ class ConnectomePolicy(ActorCriticPolicy):
 
     def _build(self, lr_schedule):
         # Build connectome network here so parameters exist when optimizer is created
-        self.connectome = ConnectomeNetwork(nociception=False)
+        self.connectome = ConnectomeNetwork(nociception=True)
         
         # Set up optimizer for all parameters
         self.optimizer = self.optimizer_class(

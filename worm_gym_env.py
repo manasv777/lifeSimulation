@@ -90,7 +90,7 @@ class WormGymEnv(gym.Env):
         new_gradient = self.world.gradient[worm.pos[0]][worm.pos[1]]
         new_noxious = self.world.noxious_gradient[worm.pos[0]][worm.pos[1]]
         gradient_reward = (new_gradient - old_gradient) * 10
-        noxious_penalty = (new_noxious - old_noxious) * 15  # stronger than food reward
+        noxious_penalty = (new_noxious - old_noxious) * 25  # stronger than food reward
         reward = -0.1 + gradient_reward - noxious_penalty
         
         # Check if worm reached food

@@ -41,7 +41,7 @@ class SimpleLoggingCallback(BaseCallback):
 
 run = wandb.init(
     project="c-elegans-devai",
-    name="connectome-mlp-nociception",
+    name="connectome-nociception-ash-dependent-v2",
     config={
         "algorithm": "PPO",
         "policy": "ConnectomeFeatureExtractor",
@@ -51,10 +51,10 @@ run = wandb.init(
         "learning_rate": 3e-4,
     }
 )
-env = WormGymEnv()
+env = WormGymEnv(nociception=True)
 
 model = PPO(
-    'MlpPolicy',  # ← direct class, no quotes
+    ConnectomePolicy,  # ← direct class, no quotes
     env,
     verbose=1,
     learning_rate=3e-4,
@@ -71,10 +71,10 @@ model.learn(
     callback=SimpleLoggingCallback()
 )
 
-model.save("models/worm_ppo_mlp_nociception")
+model.save("models/worm_ppo_nociception_ash")
 print("\nModel saved!")
 
-test_env = WormGymEnv()
+test_env = WormGymEnv(nociception=True)
 print("\nTesting trained model for 5 episodes:")
 total_rewards = []
 

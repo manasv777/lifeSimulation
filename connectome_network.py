@@ -49,9 +49,10 @@ def load_neuron_classification(neuron_to_idx):
 
 class ConnectomeNetwork(nn.Module):
     
-    def __init__(self, nociception = False):
+    def __init__(self, nociception = False, ablate_ash = False):
         super().__init__()
         self.nociception = nociception
+        self.ablate_ash = ablate_ash
         
         # Build two adjacency matrices from biological data
         gap_matrix, chemical_matrix, neuron_to_idx, cells = build_adjacency_matrices()
@@ -61,11 +62,13 @@ class ConnectomeNetwork(nn.Module):
         self.sensory_idx = sensory_idx
         self.motor_idx = motor_idx
         self.ash_idx = [neuron_to_idx['ASHL'], neuron_to_idx['ASHR']]
+        self.adl_idx = [neuron_to_idx['ADLL'], neuron_to_idx['ADLR']]
         self.n_neurons = len(cells)
         self.previous_state = None
 
         self.value_layer = nn.Linear(len(motor_idx), 1)  # Critic head for value estimation
         
+
         # Normalize and store gap junction matrix
         gap_normalized = gap_matrix / gap_matrix.max()
         self.gap_adjacency = nn.Parameter(
@@ -81,8 +84,16 @@ class ConnectomeNetwork(nn.Module):
             requires_grad=True
         )
         
+        if ablate_ash:
+            ablate_indices = self.ash_idx + self.adl_idx
+            for idx in ablate_indices:
+                self.gap_adjacency.data[idx, :] = 0
+                self.chemical_adjacency.data[idx, :] = 0
+
         # Linear layer: motor neurons → 5 actions
         self.output_layer = nn.Linear(len(motor_idx), 5)
+
+
         
     def forward(self, x):
         batch_size = x.shape[0]
@@ -93,30 +104,45 @@ class ConnectomeNetwork(nn.Module):
         else:
             neuron_activations = self.previous_state.detach()
         
-        # Inject food gradient into sensory neurons
+        # Step 2 — inject food gradient into sensory neurons
+        neuron_activations = neuron_activations.clone()
         gradient_value = x[:, 0]
         for idx in self.sensory_idx:
             neuron_activations[:, idx] = gradient_value
 
-        # Only inject noxious if nociception enabled
-        if self.nociception:
+        # Step 2b — inject noxious value into ASH neurons only if not ablated
+        if self.nociception and not self.ablate_ash:
             noxious_value = x[:, 2]
             for idx in self.ash_idx:
                 neuron_activations[:, idx] = noxious_value
-        
-        # Step 3 — propagate through both matrices seperately
+
+        # Step 3 — first propagation through both matrices
         electrical_signal = neuron_activations @ self.gap_adjacency
         chemical_signal = neuron_activations @ self.chemical_adjacency
-
-        # Step 4 - combine the signals and apply activation
         neuron_activations = torch.tanh(electrical_signal + chemical_signal)
-        
-        # Step 5 — read motor neuron outputs
+
+        # Zero out motor neurons — force all motor output through second propagation
+        neuron_activations = neuron_activations.clone()
+        for idx in self.motor_idx:
+            neuron_activations[:, idx] = 0.0
+
+        # Step 4 — read ASH output and re-inject amplified signal only if not ablated
+        if self.nociception and not self.ablate_ash:
+            ash_signal = neuron_activations[:, self.ash_idx].mean(dim=1)
+            neuron_activations = neuron_activations.clone()
+            for idx in self.ash_idx:
+                neuron_activations[:, idx] = ash_signal * 3.0
+
+        # Step 5 — second propagation carries ASH signal to motor neurons
+        electrical_signal2 = neuron_activations @ self.gap_adjacency
+        chemical_signal2 = neuron_activations @ self.chemical_adjacency
+        neuron_activations = torch.tanh(electrical_signal2 + chemical_signal2)
+
+        # Step 6 — read motor neuron outputs
         motor_outputs = neuron_activations[:, self.motor_idx]
-        
-        # Step 6 — linear layer to 5 action probabilities
+
+        # Step 7 — linear layer to 5 action probabilities and value
         action_logits = self.output_layer(motor_outputs)
-        
         values = self.value_layer(motor_outputs)
 
         self.previous_state = neuron_activations

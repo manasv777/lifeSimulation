@@ -95,3 +95,7 @@ Biological Validation:
    
 3. Behavioral consistency: low variance in connectome models
    matches reliable chemotaxis reported in C. elegans literature
+
+   note: Unlike biological ASH ablation which eliminates nociceptive avoidance entirely (Bargmann et al. 1990), computational ablation of ASH circuit pathways did not significantly reduce avoidance behavior in the trained agent. This suggests that PPO-trained agents develop distributed avoidance strategies through reward shaping, fundamentally distinct from the circuit-dependent mechanisms of biological nociception. This difference between learned and evolved neural computation represents an important direction for future work.
+
+   Day 11 complete. ASH ablation experiment attempted — confirmed fundamental limitation of RL reward shaping vs biological circuit dependency. This becomes Discussion section. Paper outline complete. Ready to write.
