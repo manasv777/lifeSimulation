@@ -6,8 +6,8 @@ from connectome_policy import ConnectomePolicy
 from connectome_network import ConnectomeNetwork
 
 SEED = 42
-N_EPISODES = 1000
-NOXIOUS_THRESHOLD = 0.3
+N_EPISODES = 500
+NOXIOUS_THRESHOLD = 0.6 
 
 pyrandom.seed(SEED)
 np.random.seed(SEED)
@@ -20,12 +20,14 @@ def generate_fixed_episodes(n=N_EPISODES, grid_size=20):
                      pyrandom.randint(0, grid_size-1))
             food  = (pyrandom.randint(1, grid_size-2),
                      pyrandom.randint(1, grid_size-2))
-            if start != food:
-                episodes.append((start, food))
+            noxious = (pyrandom.randint(1, grid_size-2),
+                       pyrandom.randint(1, grid_size-2))
+            if start != food and noxious != food and noxious != start:
+                episodes.append((start, food, noxious))
                 break
     return episodes
 
-def evaluate_model(model_path, episodes, ablate_ash=False):
+def evaluate_model(model_path, episodes, ablate_ash=False, noxious_penalty = True):
     # Load with ConnectomePolicy
     try:
         model = PPO.load(model_path, custom_objects={"policy_class": ConnectomePolicy})
@@ -36,26 +38,26 @@ def evaluate_model(model_path, episodes, ablate_ash=False):
     # Apply ASH ablation if requested
     if ablate_ash:
         model.policy.connectome.ablate_ash = True
-        print(f"  DEBUG: ablate_ash flag = {model.policy.connectome.ablate_ash}")
-        print(f"  DEBUG: nociception flag = {model.policy.connectome.nociception}")
-        
-        # Verify ablation was applied
-        ash_idx = model.policy.connectome.ash_idx[0]
-        gap_sum = model.policy.connectome.gap_adjacency.data[ash_idx, :].sum()
-        chem_sum = model.policy.connectome.chemical_adjacency.data[ash_idx, :].sum()
-        print(f"  DEBUG: ASH row sum after ablation — gap: {gap_sum:.4f}, chem: {chem_sum:.4f}")
-        print(f"  DEBUG: Should both be 0.0000")
+
+    # Debug — verify forward pass differs between conditions
+    import torch
+    test_obs = torch.FloatTensor([[0.5, 0.1, 0.8]])
+    with torch.no_grad():
+        logits, vals = model.policy.connectome(test_obs)
+    print(f"  DEBUG: ablate_ash = {model.policy.connectome.ablate_ash}")
+    print(f"  DEBUG: logits = {logits}")
 
     rewards = []
     noxious_entries = []
 
-    for start_pos, food_pos in episodes:
-        env = WormGymEnv(nociception=True)
-
+    for start_pos, food_pos, noxious_pos in episodes:
+        env = WormGymEnv(nociception=True, noxious_penalty=noxious_penalty)
         obs, _ = env.reset()
         env.world.grid.move_agent(list(env.world.agents)[0], start_pos)
         env.world.food_pos = food_pos
+        env.world.noxious_pos = noxious_pos
         env.world._update_gradient()
+        env.world._update_noxious_gradient()
         obs = env._get_observation()
 
         episode_reward = 0
@@ -75,6 +77,9 @@ def evaluate_model(model_path, episodes, ablate_ash=False):
 
         rewards.append(episode_reward)
         noxious_entries.append(episode_noxious)
+        if len(rewards) < 5:
+            worm = list(env.world.agents)[0]
+            print(f"  Episode {len(rewards)+1}: worm={start_pos}, food={food_pos}, noxious={noxious_pos}")
 
     return rewards, noxious_entries
 
@@ -86,13 +91,13 @@ def main():
     episodes = generate_fixed_episodes()
     print(f"Generated {N_EPISODES} episodes with seed {SEED}\n")
 
-    model_path = "models/worm_ppo_nociception_ash"
+    model_path = "models/worm_ppo_nociception_final"
 
     print("Condition 1: ASH Intact")
-    result_intact = evaluate_model(model_path, episodes, ablate_ash=False)
+    result_intact = evaluate_model(model_path, episodes, ablate_ash=False, noxious_penalty = False)
 
     print("Condition 2: ASH Ablated")
-    result_ablated = evaluate_model(model_path, episodes, ablate_ash=True)
+    result_ablated = evaluate_model(model_path, episodes, ablate_ash=True, noxious_penalty = False)
 
     if result_intact and result_ablated:
         rewards_i, noxious_i = result_intact

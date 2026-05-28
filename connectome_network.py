@@ -49,10 +49,11 @@ def load_neuron_classification(neuron_to_idx):
 
 class ConnectomeNetwork(nn.Module):
     
-    def __init__(self, nociception = False, ablate_ash = False):
+    def __init__(self, nociception = False, ablate_ash = False, recurrent=True):
         super().__init__()
         self.nociception = nociception
         self.ablate_ash = ablate_ash
+        self.recurrent = recurrent
         
         # Build two adjacency matrices from biological data
         gap_matrix, chemical_matrix, neuron_to_idx, cells = build_adjacency_matrices()
@@ -99,10 +100,10 @@ class ConnectomeNetwork(nn.Module):
         batch_size = x.shape[0]
         
         # Step 1 — create 302-length input vector, starting with previous activations or zeros
-        if self.previous_state is None or self.previous_state.shape[0] != batch_size:
-            neuron_activations = torch.zeros(batch_size, self.n_neurons)
-        else:
+        if self.recurrent and self.previous_state is not None and self.previous_state.shape[0] == batch_size:
             neuron_activations = self.previous_state.detach()
+        else:
+            neuron_activations = torch.zeros(batch_size, self.n_neurons)
         
         # Step 2 — inject food gradient into sensory neurons
         neuron_activations = neuron_activations.clone()

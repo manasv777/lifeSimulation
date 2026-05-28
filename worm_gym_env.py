@@ -7,20 +7,22 @@ from worm_environment import WormWorld
 
 class WormGymEnv(gym.Env):
     
-    def __init__(self, width=20, height=20, nociception = False):
+    def __init__(self, width=20, height=20, nociception = False, noxious_penalty = True):
         super().__init__()
         self.nociception = nociception
+        self.noxious_penalty = noxious_penalty
         
         # Create the Mesa world
         self.world = WormWorld(width=width, height=height)
         
         # Tell PPO what observations look like
-        self.observation_space = gym.spaces.Box(
-            low=0.0,
-            high=1.0,
-            shape=(3,),
-            dtype=np.float32
-        )
+# Tell PPO what observations look like
+        if nociception:
+            self.observation_space = gym.spaces.Box(
+                low=0.0, high=1.0, shape=(3,), dtype=np.float32)
+        else:
+            self.observation_space = gym.spaces.Box(
+                low=0.0, high=1.0, shape=(2,), dtype=np.float32)
         
         # Tell PPO what actions are possible
         self.action_space = gym.spaces.Discrete(5)
@@ -90,9 +92,11 @@ class WormGymEnv(gym.Env):
         new_gradient = self.world.gradient[worm.pos[0]][worm.pos[1]]
         new_noxious = self.world.noxious_gradient[worm.pos[0]][worm.pos[1]]
         gradient_reward = (new_gradient - old_gradient) * 10
-        noxious_penalty = (new_noxious - old_noxious) * 25  # stronger than food reward
-        reward = -0.1 + gradient_reward - noxious_penalty
-        
+        reward = -0.1 + gradient_reward
+        if self.noxious_penalty:
+            noxious_penalty = (new_noxious - old_noxious) * 25
+            reward -= noxious_penalty
+                
         # Check if worm reached food
         if worm.pos == self.world.food_pos:
             reward += 10.0

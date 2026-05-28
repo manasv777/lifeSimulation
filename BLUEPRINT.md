@@ -99,3 +99,11 @@ Biological Validation:
    note: Unlike biological ASH ablation which eliminates nociceptive avoidance entirely (Bargmann et al. 1990), computational ablation of ASH circuit pathways did not significantly reduce avoidance behavior in the trained agent. This suggests that PPO-trained agents develop distributed avoidance strategies through reward shaping, fundamentally distinct from the circuit-dependent mechanisms of biological nociception. This difference between learned and evolved neural computation represents an important direction for future work.
 
    Day 11 complete. ASH ablation experiment attempted — confirmed fundamental limitation of RL reward shaping vs biological circuit dependency. This becomes Discussion section. Paper outline complete. Ready to write.
+
+   Day 11 additno - Identified true ASH ablation solution — remove noxious penalty from reward during validation so worm has no external punishment signal. Only way avoidance persists is through learned ASH circuit. Implement tomorrow. Abstract drafted.
+
+   Hypothesis: wider noxious gradient with threshold 0.4 will force more noxious zone encounters during training, producing stronger ASH-dependent avoidance. Expecting clear increase in noxious entries when ASH is ablated.
+
+   Despite multiple architectural approaches designed to enforce ASH-dependent nociception, computational ablation produced no significant behavioral difference, suggesting PPO-trained agents develop distributed avoidance strategies through reward shaping that are robust to single-circuit ablation. This represents a fundamental difference from biological systems where ASH ablation eliminates avoidance entirely.
+
+   Finding: Connectome feature extraction improves mean performance over unconstrained MLP baseline. Recurrent connectome architecture achieves the most consistent behavior across diverse environments, matching real C. elegans behavioral reliability.

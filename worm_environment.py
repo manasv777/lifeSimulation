@@ -34,9 +34,27 @@ class WormWorld(mesa.Model):
 
         self.grid = mesa.space.SingleGrid(width, height, torus=False)
 
-        self.food_pos = (width // 2, height // 2)
+        # Place worm at random position
+        worm_x = pyrandom.randint(0, self.width - 1)
+        worm_y = pyrandom.randint(0, self.height - 1)
+        worm_pos = (worm_x, worm_y)
 
-        self.noxious_pos = (width // 4, height // 4)
+        # Place food at random position, not on worm
+        while True:
+            food_x = pyrandom.randint(1, self.width - 2)
+            food_y = pyrandom.randint(1, self.height - 2)
+            if (food_x, food_y) != worm_pos:
+                self.food_pos = (food_x, food_y)
+                break
+
+        # Place noxious zone at random position, not on worm or food
+        while True:
+            nox_x = pyrandom.randint(1, self.width - 2)
+            nox_y = pyrandom.randint(1, self.height - 2)
+            if (nox_x, nox_y) != worm_pos and (nox_x, nox_y) != self.food_pos:
+                self.noxious_pos = (nox_x, nox_y)
+                break
+
         self.noxious_gradient = np.zeros((width, height))
         self._update_noxious_gradient()
 
@@ -44,9 +62,7 @@ class WormWorld(mesa.Model):
         self._update_gradient()
 
         worm = WormAgent(self)
-        x = pyrandom.randint(0, self.width - 1)
-        y = pyrandom.randint(0, self.height - 1)
-        self.grid.place_agent(worm, (x, y))
+        self.grid.place_agent(worm, worm_pos)
 
     def _update_gradient(self):
         for x in range(self.width):
@@ -64,7 +80,7 @@ class WormWorld(mesa.Model):
                     (x - self.noxious_pos[0])**2 +
                     (y - self.noxious_pos[1])**2
                 )
-                self.noxious_gradient[x][y] = 1.0 / (1.0 + dist)
+                self.noxious_gradient[x][y] = 1.0 / (1.0 + dist * 0.3)
 
     def step(self):
         self.agents.shuffle_do("step")

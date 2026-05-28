@@ -41,20 +41,20 @@ class SimpleLoggingCallback(BaseCallback):
 
 run = wandb.init(
     project="c-elegans-devai",
-    name="connectome-nociception-ash-dependent-v2",
+    name="connectome-recurrent-v3",
     config={
         "algorithm": "PPO",
-        "policy": "ConnectomeFeatureExtractor",
+        "policy": "ConnectomePolicy",
         "total_timesteps": 100_000,
         "grid_size": 20,
         "max_steps_per_episode": 200,
         "learning_rate": 3e-4,
     }
 )
-env = WormGymEnv(nociception=True)
+env = WormGymEnv()
 
 model = PPO(
-    ConnectomePolicy,  # ← direct class, no quotes
+    ConnectomePolicy,
     env,
     verbose=1,
     learning_rate=3e-4,
@@ -71,10 +71,10 @@ model.learn(
     callback=SimpleLoggingCallback()
 )
 
-model.save("models/worm_ppo_nociception_ash")
+model.save("models/worm_ppo_recurrent_v3")
 print("\nModel saved!")
 
-test_env = WormGymEnv(nociception=True)
+test_env = WormGymEnv()
 print("\nTesting trained model for 5 episodes:")
 total_rewards = []
 

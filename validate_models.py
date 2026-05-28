@@ -4,35 +4,28 @@ from stable_baselines3 import PPO
 from worm_gym_env import WormGymEnv
 from connectome_policy import ConnectomePolicy
 
-# ── Configuration ──────────────────────────────────────────────
-SEED = 42
-N_EPISODES = 20
+SEEDS = [42, 28, 7, 15, 99, 123, 256, 512, 77, 33]
+N_EPISODES_PER_SEED = 20
 MODELS = {
-    "MLP Baseline":              "models/worm_ppo_baseline",
-    "Connectome Signed (Opt A)": "models/worm_ppo_connectome_signed_v2",
-    "Two-Matrix (Opt A)":        "models/worm_ppo_connectome_two_matrix_v2",
-    "Two-Matrix + Option B":     "models/worm_ppo_two_matrix_option_b_v2",
-    "Recurrent Option B":        "models/worm_ppo_recurrent_option_b",
+    "MLP Baseline":     "models/worm_ppo_baseline_v3",
+    "Connectome Opt A": "models/worm_ppo_connectome_signed_v3",
+    "Connectome Opt B": "models/worm_ppo_option_b_v3",
+    "Recurrent Opt B":  "models/worm_ppo_recurrent_v3",
 }
 
-# ── Generate fixed test episodes ───────────────────────────────
-pyrandom.seed(SEED)
-np.random.seed(SEED)
-
-def generate_fixed_episodes(n=N_EPISODES, grid_size=20):
+def generate_fixed_episodes(seed, n=N_EPISODES_PER_SEED, grid_size=20):
+    pyrandom.seed(seed)
+    np.random.seed(seed)
     episodes = []
     for _ in range(n):
         while True:
-            start = (pyrandom.randint(0, grid_size-1),
-                     pyrandom.randint(0, grid_size-1))
-            food  = (pyrandom.randint(1, grid_size-2),
-                     pyrandom.randint(1, grid_size-2))
+            start = (pyrandom.randint(0, grid_size-1), pyrandom.randint(0, grid_size-1))
+            food  = (pyrandom.randint(1, grid_size-2), pyrandom.randint(1, grid_size-2))
             if start != food:
                 episodes.append((start, food))
                 break
     return episodes
 
-# ── Evaluate one model ─────────────────────────────────────────
 def evaluate_model(model_path, episodes, custom_policy=None):
     try:
         if custom_policy:
@@ -43,13 +36,9 @@ def evaluate_model(model_path, episodes, custom_policy=None):
         print(f"  Could not load {model_path}: {e}")
         return None
 
-    print(f"  Loaded: {model_path}")
-    print(f"  Policy type: {type(model.policy)}")
-
     rewards = []
     for start_pos, food_pos in episodes:
         env = WormGymEnv()
-
         obs, _ = env.reset()
         env.world.grid.move_agent(list(env.world.agents)[0], start_pos)
         env.world.food_pos = food_pos
@@ -63,49 +52,35 @@ def evaluate_model(model_path, episodes, custom_policy=None):
             episode_reward += reward
             if terminated or truncated:
                 break
-
         rewards.append(episode_reward)
 
-    return rewards
+    return np.mean(rewards)
 
-# ── Run validation ─────────────────────────────────────────────
 def main():
-    print("Generating fixed test episodes...")
-    episodes = generate_fixed_episodes()
-    print(f"Generated {len(episodes)} episodes with seed {SEED}")
-    print(f"First 3 episodes: {episodes[:3]}\n")
+    # seed_means[model_name] = list of per-seed mean rewards
+    seed_means = {name: [] for name in MODELS}
 
-    results = {}
+    for seed in SEEDS:
+        print(f"\nSeed {seed}")
+        episodes = generate_fixed_episodes(seed)
+        for name, path in MODELS.items():
+            is_option_b = "Opt B" in name
+            mean_reward = evaluate_model(
+                path, episodes,
+                custom_policy=ConnectomePolicy if is_option_b else None
+            )
+            if mean_reward is not None:
+                seed_means[name].append(mean_reward)
+                print(f"  {name}: {mean_reward:.2f}")
 
-    for name, path in MODELS.items():
-        print(f"Evaluating: {name}")
-        is_option_b = "Option B" in name
-        rewards = evaluate_model(
-            path,
-            episodes,
-            custom_policy=ConnectomePolicy if is_option_b else None
-        )
-
-        if rewards:
-            results[name] = rewards
-            mean  = np.mean(rewards)
-            std   = np.std(rewards)
-            best  = np.max(rewards)
-            worst = np.min(rewards)
-            print(f"  Mean:  {mean:.2f}")
-            print(f"  Std:   {std:.2f}")
-            print(f"  Best:  {best:.2f}")
-            print(f"  Worst: {worst:.2f}")
-        print()
-
-    print("=" * 65)
+    print("\n" + "=" * 65)
     print(f"{'Model':<28} {'Mean':>8} {'Std':>8} {'Best':>8} {'Worst':>8}")
     print("=" * 65)
-    for name, rewards in results.items():
-        print(f"{name:<28} {np.mean(rewards):>8.2f} "
-              f"{np.std(rewards):>8.2f} "
-              f"{np.max(rewards):>8.2f} "
-              f"{np.min(rewards):>8.2f}")
+    for name, means in seed_means.items():
+        print(f"{name:<28} {np.mean(means):>8.2f} "
+              f"{np.std(means):>8.2f} "
+              f"{np.max(means):>8.2f} "
+              f"{np.min(means):>8.2f}")
     print("=" * 65)
 
 if __name__ == "__main__":
