@@ -49,11 +49,12 @@ def load_neuron_classification(neuron_to_idx):
 
 class ConnectomeNetwork(nn.Module):
     
-    def __init__(self, nociception = False, ablate_ash = False, recurrent=True):
+    def __init__(self, nociception = False, ablate_ash = False, recurrent=False):
         super().__init__()
         self.nociception = nociception
         self.ablate_ash = ablate_ash
         self.recurrent = recurrent
+
         
         # Build two adjacency matrices from biological data
         gap_matrix, chemical_matrix, neuron_to_idx, cells = build_adjacency_matrices()
@@ -84,6 +85,11 @@ class ConnectomeNetwork(nn.Module):
             torch.FloatTensor(chem_normalized),
             requires_grad=True
         )
+
+        self.register_buffer('gap_mask', (self.gap_adjacency.data != 0).float())
+        self.register_buffer('chem_mask', (self.chemical_adjacency.data != 0).float())
+        self.register_buffer('gap_sign', torch.sign(self.gap_adjacency.data))
+        self.register_buffer('chem_sign', torch.sign(self.chemical_adjacency.data))
         
         if ablate_ash:
             ablate_indices = self.ash_idx + self.adl_idx
@@ -94,8 +100,19 @@ class ConnectomeNetwork(nn.Module):
         # Linear layer: motor neurons → 5 actions
         self.output_layer = nn.Linear(len(motor_idx), 5)
 
+    def enforce_constraints(self):
+        with torch.no_grad():
+            self.gap_adjacency.data *= self.gap_mask
+            self.chemical_adjacency.data *= self.chem_mask
 
-        
+            gap_wrong = torch.sign(self.gap_adjacency.data) != self.gap_sign
+            self.gap_adjacency.data[gap_wrong] = 0.0
+            chem_wrong = torch.sign(self.chemical_adjacency.data) != self.chem_sign
+            self.chemical_adjacency.data[chem_wrong] = 0.0
+
+            self.gap_adjacency.data = (self.gap_adjacency.data + self.gap_adjacency.data.t()) / 2
+
+
     def forward(self, x):
         batch_size = x.shape[0]
         

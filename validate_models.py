@@ -8,9 +8,9 @@ SEEDS = [42, 28, 7, 15, 99, 123, 256, 512, 77, 33]
 N_EPISODES_PER_SEED = 20
 MODELS = {
     "MLP Baseline":     "models/worm_ppo_baseline_v3",
-    "Connectome Opt A": "models/worm_ppo_connectome_signed_v3",
-    "Connectome Opt B": "models/worm_ppo_option_b_v3",
-    "Recurrent Opt B":  "models/worm_ppo_recurrent_v3",
+    "Connectome Opt A": "models/worm_ppo_opt_a_v4",
+    "Connectome Opt B": "models/worm_ppo_opt_b_v4",
+    "Recurrent Opt B":  "models/worm_ppo_recurrent_v4",
 }
 
 def generate_fixed_episodes(seed, n=N_EPISODES_PER_SEED, grid_size=20):

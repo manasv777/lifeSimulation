@@ -9,12 +9,20 @@ import torch
 import torch.nn as nn
 from connectome_policy import ConnectomePolicy
 
+
+def enforce_on_policy(policy):
+    """Find the connectome wherever it lives and enforce biological constraints."""
+    if hasattr(policy, 'connectome'):
+        policy.connectome.enforce_constraints()
+    elif hasattr(policy, 'features_extractor') and hasattr(policy.features_extractor, 'connectome'):
+        policy.features_extractor.connectome.enforce_constraints()
+
+
 class ConnectomeFeatureExtractor(BaseFeaturesExtractor):
 
-    def __init__(self, observation_space, features_dim = 64):
+    def __init__(self, observation_space, features_dim=64):
         super().__init__(observation_space, features_dim)
-
-        self.connectome = ConnectomeNetwork(nociception=False)
+        self.connectome = ConnectomeNetwork(nociception=False, recurrent=False)
         self.output = nn.Linear(5, features_dim)
 
     def forward(self, observations):
@@ -27,7 +35,12 @@ class SimpleLoggingCallback(BaseCallback):
         super().__init__(verbose)
         self.episode_rewards = []
         self.current_episode_reward = 0
-    
+
+    def _on_rollout_start(self):
+        # Fires after each train() cycle, before the next rollout.
+        # Clean the matrices so the agent always ACTS on a legal network.
+        enforce_on_policy(self.model.policy)
+
     def _on_step(self):
         self.current_episode_reward += self.locals['rewards'][0]
         if self.locals['dones'][0]:
@@ -39,12 +52,13 @@ class SimpleLoggingCallback(BaseCallback):
             self.current_episode_reward = 0
         return True
 
+
 run = wandb.init(
     project="c-elegans-devai",
-    name="connectome-recurrent-v3",
+    name="connectome-recurrent-v4",
     config={
         "algorithm": "PPO",
-        "policy": "ConnectomePolicy",
+        "policy": "ConnectomeFeatureExtractor",
         "total_timesteps": 100_000,
         "grid_size": 20,
         "max_steps_per_episode": 200,
@@ -52,16 +66,10 @@ run = wandb.init(
     }
 )
 env = WormGymEnv()
+model = PPO(ConnectomePolicy, env, verbose=1, learning_rate=3e-4, n_steps=2048, batch_size=64, n_epochs=10)
 
-model = PPO(
-    ConnectomePolicy,
-    env,
-    verbose=1,
-    learning_rate=3e-4,
-    n_steps=2048,
-    batch_size=64,
-    n_epochs=10,
-)
+# Clean before the very first rollout (no _on_rollout_start has fired yet)
+enforce_on_policy(model.policy)
 
 print("Starting training...")
 print("Watch live at wandb.ai\n")
@@ -71,7 +79,10 @@ model.learn(
     callback=SimpleLoggingCallback()
 )
 
-model.save("models/worm_ppo_recurrent_v3")
+# Guarantee the SAVED model is clean
+enforce_on_policy(model.policy)
+
+model.save("models/worm_ppo_recurrent_v4")
 print("\nModel saved!")
 
 test_env = WormGymEnv()
@@ -84,7 +95,7 @@ for episode in range(5):
     steps = 0
     worm_start = list(test_env.world.agents)[0].pos
     food_location = test_env.world.food_pos
-    
+
     while True:
         action, _ = model.predict(obs, deterministic=True)
         obs, reward, terminated, truncated, _ = test_env.step(action)
@@ -92,7 +103,7 @@ for episode in range(5):
         steps += 1
         if terminated or truncated:
             break
-    
+
     total_rewards.append(episode_reward)
     print(f"  Episode {episode+1}: start={worm_start}, food={food_location}, "
           f"{steps} steps, reward: {episode_reward:.2f}")

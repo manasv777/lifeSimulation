@@ -107,3 +107,6 @@ Biological Validation:
    Despite multiple architectural approaches designed to enforce ASH-dependent nociception, computational ablation produced no significant behavioral difference, suggesting PPO-trained agents develop distributed avoidance strategies through reward shaping that are robust to single-circuit ablation. This represents a fundamental difference from biological systems where ASH ablation eliminates avoidance entirely.
 
    Finding: Connectome feature extraction improves mean performance over unconstrained MLP baseline. Recurrent connectome architecture achieves the most consistent behavior across diverse environments, matching real C. elegans behavioral reliability.
+
+   Added constraints to keep learning biologically accirate
+   Biologically grounded architectures consistently outperform the unconstrained MLP baseline in mean reward. Enforcing biological structural constraints — fixing connection existence, sign, and gap junction symmetry — reduces behavioral variance across all connectome architectures. The recurrent biologically-constrained network achieves the lowest variance, consistent with the behavioral reliability characteristic of real C. elegans.
