@@ -26,8 +26,9 @@ class WormAgent(mesa.Agent):
 
 class WormWorld(mesa.Model):
 
-    def __init__(self, width=20, height=20):
+    def __init__(self, width=20, height=20, seed = None):
         super().__init__()
+        self.rng = pyrandom.Random(seed)
 
         self.width = width
         self.height = height
@@ -35,22 +36,22 @@ class WormWorld(mesa.Model):
         self.grid = mesa.space.SingleGrid(width, height, torus=False)
 
         # Place worm at random position
-        worm_x = pyrandom.randint(0, self.width - 1)
-        worm_y = pyrandom.randint(0, self.height - 1)
+        worm_x = self.rng.randint(0, self.width - 1)
+        worm_y = self.rng.randint(0, self.height - 1)
         worm_pos = (worm_x, worm_y)
 
         # Place food at random position, not on worm
         while True:
-            food_x = pyrandom.randint(1, self.width - 2)
-            food_y = pyrandom.randint(1, self.height - 2)
+            food_x = self.rng.randint(1, self.width - 2)
+            food_y = self.rng.randint(1, self.height - 2)
             if (food_x, food_y) != worm_pos:
                 self.food_pos = (food_x, food_y)
                 break
 
         # Place noxious zone at random position, not on worm or food
         while True:
-            nox_x = pyrandom.randint(1, self.width - 2)
-            nox_y = pyrandom.randint(1, self.height - 2)
+            nox_x = self.rng.randint(1, self.width - 2)
+            nox_y = self.rng.randint(1, self.height - 2)
             if (nox_x, nox_y) != worm_pos and (nox_x, nox_y) != self.food_pos:
                 self.noxious_pos = (nox_x, nox_y)
                 break

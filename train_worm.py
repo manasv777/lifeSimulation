@@ -55,7 +55,7 @@ class SimpleLoggingCallback(BaseCallback):
 
 run = wandb.init(
     project="c-elegans-devai",
-    name="connectome-recurrent-v4",
+    name="mlp-nociception-v4",
     config={
         "algorithm": "PPO",
         "policy": "ConnectomeFeatureExtractor",
@@ -65,8 +65,8 @@ run = wandb.init(
         "learning_rate": 3e-4,
     }
 )
-env = WormGymEnv()
-model = PPO(ConnectomePolicy, env, verbose=1, learning_rate=3e-4, n_steps=2048, batch_size=64, n_epochs=10)
+env = WormGymEnv(nociception=True)
+model = PPO("MlpPolicy", env, verbose=1, learning_rate=3e-4, n_steps=2048, batch_size=64, n_epochs=10)
 
 # Clean before the very first rollout (no _on_rollout_start has fired yet)
 enforce_on_policy(model.policy)
@@ -82,10 +82,10 @@ model.learn(
 # Guarantee the SAVED model is clean
 enforce_on_policy(model.policy)
 
-model.save("models/worm_ppo_recurrent_v4")
+model.save("models/worm_ppo_nociception_mlp_v4")
 print("\nModel saved!")
 
-test_env = WormGymEnv()
+test_env = WormGymEnv(nociception=True)
 print("\nTesting trained model for 5 episodes:")
 total_rewards = []
 

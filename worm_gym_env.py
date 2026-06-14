@@ -33,10 +33,8 @@ class WormGymEnv(gym.Env):
 
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
-
-        self.world = WormWorld(width = 20, height = 20)
+        self.world = WormWorld(width=20, height=20, seed=seed)
         self.current_step = 0
-
         observation = self._get_observation()
         return observation, {}
     
@@ -103,8 +101,8 @@ class WormGymEnv(gym.Env):
             worm.hunger = 0.0
             # Respawn food
             self.world.food_pos = (
-                pyrandom.randint(1, self.world.width - 2),
-                pyrandom.randint(1, self.world.height - 2)
+                self.world.rng.randint(1, self.world.width - 2),
+                self.world.rng.randint(1, self.world.height - 2)
             )
             self.world._update_gradient()
         
