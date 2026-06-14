@@ -272,7 +272,7 @@ chemotaxis only, with nociception explicitly deferred to future work. Verified e
 sources; cut three that no longer anchored to claims in the paper (Bargmann 1990, Hilliard 2002, Porta-de-la-Riva
 2012) and added Lechner, Grosu & Hasani (2017) as the closest related work, with a gap paragraph distinguishing it.
 
-Sent the draft to Professor Praneeth Chakravarthula and Hisham for feedback. Hisham's response: the "it works"
+Sent the draft to a professor and PhD student in UNC Department of Computer Science. Response: the "it works"
 result is interesting, but the paper would be much stronger as an **interpretability** study — identifying *which*
 component of the biological structure (sparsity, sign, topology, symmetry) is responsible for the advantage.
 
@@ -286,4 +286,4 @@ and the original headline idea — hereditary weight transfer / multi-generation
 reproducing agents.
 
 **Next:** design the component-wise structural ablation experiments (isolating sparsity vs sign vs topology vs
-symmetry) to answer Hisham's "which component is responsible" question.
+symmetry) to answer the "which component is responsible" question.
